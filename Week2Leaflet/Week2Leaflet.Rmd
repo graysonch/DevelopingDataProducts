@@ -1,0 +1,59 @@
+---
+title: "Week2Leaflet"
+author: "Christine Grayson"
+date: "10/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```r
+install.packages("leaflet")
+```
+
+## Mapping Florida Counties Highlighted by Area
+
+This example was obtained ([here](https://rstudio.github.io/leaflet/json.htm) l but modified to use a 
+data set for Florida and tailored to show the area of the county by gradient color. Data was
+obtained ([eric.clst.org](https://eric.clst.org/tech/usgeojson/) and cut down from the entire US.
+Very impressed with how easy this was.
+
+```{r, eval=FALSE}
+library(leaflet)
+library(rgdal)
+
+flcounties <- rgdal::readOGR("gz_2010_us_050_00_fl.json")
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(flcounties) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+    fillColor = ~pal(log10(CENSUSAREA)),
+    label = ~paste0(NAME, ": ", formatC(CENSUSAREA, big.mark = ","))) %>%
+  addLegend(pal = pal, values = ~log10(CENSUSAREA), opacity = 1.0,
+    labFormat = labelFormat(transform = function(x) round(10^x)))
+```
+
+## Mapping Florida Counties Highlighted by Area
+
+```{r, echo=FALSE, comment=FALSE, warning=FALSE, message=FALSE, error=FALSE, include=FALSE}
+library(leaflet)
+library(rgdal)
+
+flcounties <- rgdal::readOGR("gz_2010_us_050_00_fl.json")
+```
+
+```{r, echo=FALSE, comment=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(flcounties) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+    fillColor = ~pal(log10(CENSUSAREA)),
+    label = ~paste0(NAME, ": ", formatC(CENSUSAREA, big.mark = ","))) %>%
+  addLegend(pal = pal, values = ~log10(CENSUSAREA), opacity = 1.0,
+    labFormat = labelFormat(transform = function(x) round(10^x)))
+
+```
