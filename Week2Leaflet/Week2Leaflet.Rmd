@@ -15,9 +15,9 @@ install.packages("leaflet")
 
 ## Mapping Florida Counties Highlighted by Area
 
-This example was obtained ([here](https://rstudio.github.io/leaflet/json.htm) l but modified to use a 
+This example was obtained [here](https://rstudio.github.io/leaflet/json.htm) but I modified it to use a 
 data set for Florida and tailored to show the area of the county by gradient color. Data was
-obtained ([eric.clst.org](https://eric.clst.org/tech/usgeojson/) and cut down from the entire US.
+obtained from this site [eric.clst.org](https://eric.clst.org/tech/usgeojson/) and cut down from the entire US.
 Very impressed with how easy this was.
 
 ```{r, eval=FALSE}
