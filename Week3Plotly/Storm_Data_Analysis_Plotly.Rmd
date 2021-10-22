@@ -1,0 +1,473 @@
+---
+title: 'Developing Data Products - Most Harmful US Storm Events'
+author: "Christine Grayson"
+date: "10/22/2021"
+output:
+  html_document:
+    df_print: paged
+    self_contained: yes
+    keep_md: yes
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressWarnings(suppressMessages(library(knitr)))
+suppressWarnings(suppressMessages(library(dplyr)))
+suppressWarnings(suppressMessages(library(ggplot2)))
+suppressWarnings(suppressMessages(library(tidyr)))
+suppressWarnings(suppressMessages(library(readr)))
+suppressWarnings(suppressMessages(library(kableExtra)))
+suppressWarnings(suppressMessages(library(plotly)))
+```
+
+## Synopsis
+
+This project is created for week three of the peer graded assignment of the course "Developeing Data Products" offered by Johns Hopkins University through Coursera.
+
+The aim is to produce a plotly graph. I thought I would repeat one of the graphs (produced in ggplot) from my submission for the course "Reproducible Research" which can be found [here](https://rpubs.com/graysonch/750089). The bar chart shows the most severe storms to personal safety. 
+
+```{r, echo = FALSE}
+
+zipped_file <- "StormData.csv.bz2"
+if(!file.exists(zipped_file)){
+    dest_file_path <- file.path("./")
+    fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+    download.file(fileUrl,destfile=zipped_file,method="curl")
+}
+```
+
+```{r, echo = FALSE, cache = TRUE}
+if(file.exists(zipped_file)) {
+    stormData <- read.csv(file=zipped_file)
+    
+} else {
+    knit_exit()("No data, exiting!")
+}
+```
+
+```{r, echo = FALSE}
+positive_harm_table <- stormData[!(stormData$FATALITIES == 0 & stormData$INJURIES == 0 & stormData$PROPDMG == 0 & stormData$CROPDMG == 0),]
+unique_envtypes <- unique(sort(positive_harm_table$EVTYPE))
+#print(length(unique_envtypes))
+
+# cols <- 50
+# suppressWarnings(length(unique_envtypes) <- prod(dim(matrix(unique_envtypes, ncol=cols))))
+# as.data.frame(t(matrix(unique_envtypes, ncol=cols)))
+
+```
+
+```{r, echo = FALSE}
+positive_harm_table$EVTYPE<-gsub(" ", "_", positive_harm_table$EVTYPE)
+positive_harm_table$EVTYPE<-gsub("/", "_", positive_harm_table$EVTYPE)
+positive_harm_table$EVTYPE<-gsub("__", "_", positive_harm_table$EVTYPE)
+positive_harm_table$EVTYPE <- toupper(positive_harm_table$EVTYPE)
+
+# Avalanche
+positive_harm_table$EVTYPE<-gsub("AVALANCE", "AVALANCHE", positive_harm_table$EVTYPE)
+
+# Blizzard
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("BLIZZARD",EVTYPE), "BLIZZARD", EVTYPE))
+
+# Coastal Flood
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^COASTAL_FLOOD",EVTYPE) |
+                         grepl("^COASTAL_EROSION",EVTYPE) |
+                         grepl("^COASTAL_SURGE",EVTYPE) |
+                         grepl("^EROSION_CSTL_FLOOD",EVTYPE) |
+                         grepl("^TIDAL_FLOODING",EVTYPE), "COASTAL_FLOOD", EVTYPE))
+
+# Cold / Windchill
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^COLD",EVTYPE) |
+                         grepl("^COOL_AND_WET",EVTYPE) |
+                         grepl("^LOW_TEMPERATURE",EVTYPE) |
+                         grepl("^UNSEASONABLY_COLD",EVTYPE) |
+                         grepl("^EXTENDED_COLD",EVTYPE) |
+                         grepl("^UNSEASONABLE_COLD",EVTYPE) |
+                         grepl("^HYPOTHERMIA",EVTYPE) |
+                         grepl("^HYPERTHERMIA",EVTYPE), "COLD/WIND_CHILL", EVTYPE))
+
+# Debris Flow
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("LANDSLIDES",EVTYPE) |
+                         grepl("LANDSLIDE",EVTYPE) |
+                         grepl("LANDSLUMP",EVTYPE) |
+                         grepl("DEBRIS_FLOW",EVTYPE)  |
+                         grepl("ROCK_SLIDE",EVTYPE), "DEBRIS_FLOW", EVTYPE))
+
+# Drought
+positive_harm_table$EVTYPE<-gsub("DROUGHT_EXCESSIVE_HEAT", "DROUGHT", positive_harm_table$EVTYPE)
+positive_harm_table$EVTYPE<-gsub("HEAT_AND_DRY", "DROUGHT", positive_harm_table$EVTYPE)
+
+# Dust Devil
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^DUST_STORM",EVTYPE), "DUST_STORM", EVTYPE))
+
+# Dust Storm
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^DUST_DEVIL",EVTYPE) |
+                         grepl("^BLOWING_DUST",EVTYPE) |
+                         grepl("^LANDSPOUT",EVTYPE), "DUST_DEVIL", EVTYPE))
+
+# Extreme Cold / Windchill
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^RECORD_COLD",EVTYPE) |
+                         grepl("^EXTREME_WINDCHILL",EVTYPE) |
+                         grepl("^EXTREME_WIND_CHILL",EVTYPE) |
+                         grepl("^EXTREME_COLD",EVTYPE), "EXTREME_COLD/WIND_CHILL", EVTYPE))
+
+# Flash Flood
+positive_harm_table <- positive_harm_table %>%
+     mutate(EVTYPE=ifelse(grepl("FLASH",EVTYPE) & grepl("FLOOD",EVTYPE), "FLASH_FLOOD", EVTYPE))
+positive_harm_table <- positive_harm_table %>%
+   mutate(EVTYPE=ifelse(grepl("^MUD",EVTYPE), "FLASH_FLOOD", EVTYPE))
+
+# Flood
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^RIVER_FLOOD",EVTYPE) |
+                         grepl("^SMALL_STREAM_FLOOD",EVTYPE) |
+                         grepl("^ICE_JAM",EVTYPE) | # anything that begins ICE_JAM
+                         grepl("^ICE_FLOWS$",EVTYPE) |
+                         grepl("^ICE_FLOES$",EVTYPE) |
+                         grepl("^MAJOR_FLOOD",EVTYPE) |
+                         grepl("^MINOR_FLOODING",EVTYPE) |
+                         grepl("^FLOOD_HEAVY_RAIN",EVTYPE) |
+                         grepl("^HIGH_WATER",EVTYPE) |
+                         grepl("^RURAL_FLOOD",EVTYPE) |
+                         grepl("^URBAN",EVTYPE) |
+                         grepl("^FLOODING",EVTYPE) |
+                         grepl("^FLOODS",EVTYPE) |
+                         grepl("^DAM_BREAK",EVTYPE) |
+                         grepl("^FLOOD_RIVER_FLOOD",EVTYPE) |
+                         grepl("^FLOOD_&_HEAVY_RAIN",EVTYPE) |
+                         grepl("^BREAKUP_FLOODING",EVTYPE) |
+                         grepl("^FLOOD_HEAVY_RAINS",EVTYPE) |
+                         grepl("^RIVER_AND_STREAM_FLOOD",EVTYPE) |
+                         grepl("^FLOOD_RAIN_WINDS",EVTYPE) |
+                         grepl("^SNOWMELT_FLOODING",EVTYPE) |
+                         grepl("^STREAM_FLOOD",EVTYPE), "FLOOD", EVTYPE))
+
+# Frost/Freeze
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^FREEZ",EVTYPE) |
+                         grepl("^HARD_FREEZE",EVTYPE) |
+                         grepl("^DAMAGING_FREEZE",EVTYPE) |
+                         grepl("^BLACK_ICE",EVTYPE) |
+                         grepl("^ICE_ON_ROAD$",EVTYPE) |
+                         grepl("^ICE_ROADS$",EVTYPE) |
+                         grepl("^ICY_ROADS$",EVTYPE) |
+                         grepl("^FROST",EVTYPE), "FROST/FREEZE", EVTYPE))
+
+# Freezing Fog
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^GLAZE$",EVTYPE) |
+                         grepl("FOG_AND_COLD_TEMPERATURES",EVTYPE), "FREEZING_FOG", EVTYPE))
+
+# Dense Fog
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^FOG$",EVTYPE), "DENSE_FOG", EVTYPE))
+
+# Hail
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HAIL",EVTYPE) | grepl("^SMALL_HAIL",EVTYPE), "HAIL", EVTYPE))
+
+# Heavy Rain
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HEAVY_RAIN",EVTYPE) |
+                         grepl("^RAIN",EVTYPE) |
+                         grepl("^DROWNING",EVTYPE) |
+                         grepl("^RAINSTORM",EVTYPE) |
+                         grepl("^HEAVY_SHOWER",EVTYPE) |
+                         grepl("^RECORD_RAINFALL",EVTYPE) |
+                         grepl("^HVY_RAIN",EVTYPE) |
+                         grepl("^RAIN_WIND",EVTYPE) |
+                         grepl("^TORRENTIAL_RAINFALL",EVTYPE) |
+                         grepl("^HEAVY_PRECIPITATION",EVTYPE) |
+                         grepl("^EXCESSIVE_WETNESS",EVTYPE) |
+                         grepl("^UNSEASONAL_RAIN",EVTYPE) |
+                         grepl("^EXCESSIVE_RAINFALL",EVTYPE), "HEAVY_RAIN", EVTYPE))
+
+# Heavy Snow
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HEAVY_SNOW",EVTYPE) | # anything that starts with heavy or excessive snow
+                         grepl("^SNOW_HEAVY",EVTYPE) | # anything that starts with snow heavy
+                         grepl("^SNOW_AND_HEAVY_SNOW",EVTYPE) |
+                         grepl("^RECORD_SNOW",EVTYPE) |
+                         grepl("^EXCESSIVE_SNOW",EVTYPE) , "HEAVY_SNOW", EVTYPE))
+
+# Heat
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^UNSEASONABLY_WARM",EVTYPE) |
+                         grepl("^WARM_WEATHER",EVTYPE) , "HEAT", EVTYPE))
+
+# Excessive Heat
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^EXTREME_HEAT",EVTYPE) |
+                         grepl("^RECORD_HEAT",EVTYPE) |
+                         grepl("^RECORD_EXCESSIVE_HEAT",EVTYPE) |
+                         grepl("^HEAT_WAVE",EVTYPE), "EXCESSIVE_HEAT", EVTYPE))
+
+# High Surf
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HIGH_SURF",EVTYPE) |
+                         grepl("__HIGH_SURF_ADVISORY",EVTYPE) |
+                         grepl("^ASTRONOMICAL_HIGH_TIDE",EVTYPE) |
+                         grepl("^BEACH_EROSION",EVTYPE) |
+                         grepl("^HEAVY_SURF_HIGH_SURF",EVTYPE) |
+                         grepl("^HIGH_TIDES",EVTYPE) |
+                         grepl("^HEAVY_SURF",EVTYPE) |
+                         grepl("^ROUGH_SURF",EVTYPE) |
+                         grepl("^HIGH_SURF_AND_WIND",EVTYPE) |
+                         grepl("^HAZARDOUS_SURF",EVTYPE) |
+                         grepl("^HIGH_SWELLS",EVTYPE) |
+                         grepl("^HEAVY_SWELLS",EVTYPE) |
+                         grepl("^HIGH_SEAS",EVTYPE) |
+                         grepl("^HEAVY_SEAS",EVTYPE) |
+                         grepl("^ROUGH_SEAS",EVTYPE) |
+                         grepl("^ROGUE_WAVE",EVTYPE) |
+                         grepl("^HIGH_WAVES",EVTYPE), "HIGH_SURF", EVTYPE))
+
+# High Wind
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HIGH_WIND",EVTYPE) |
+                         grepl("^GUSTY_WIND",EVTYPE) |
+                         grepl("^NON_TSTM_WIND",EVTYPE) |
+                         grepl("^NON-SEVERE_WIND_DAMAGE",EVTYPE) |
+                         grepl("^WIND",EVTYPE) |
+                         grepl("^GRADIENT_WIND",EVTYPE) |
+                         grepl("^HIGH_WIND_",EVTYPE), "HIGH_WIND", EVTYPE))
+
+# High Wind - this needs to come after the reclassification of HIGH_WIND AND HIGH_SURGE above
+# make sure we dont include anyting with an underscore after it.
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HIGH$",EVTYPE), "HIGH_WIND", EVTYPE))
+
+
+# Hurricane (Typhoon)
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HURRICANE",EVTYPE)|
+                         grepl("^TYPHOON",EVTYPE), "HURRICANE_TYPHOON", EVTYPE))
+
+# Ice Storm and Ice (Ice is not a valid category)
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^ICE_STORM$",EVTYPE) |
+                         grepl("^ICE_STRONG_WINDS$",EVTYPE) |
+                         grepl("^SNOW_AND_ICE_STORM$",EVTYPE) |
+                         grepl("^SNOW_ICE_STORM$",EVTYPE) |
+                         grepl("^GLAZE_ICE_STORM$",EVTYPE), "ICE_STORM", EVTYPE))
+
+# Lake-effect Snow
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^HEAVY_LAKE_SNOW",EVTYPE) |
+                         grepl("^LAKE_EFFECT_SNOW",EVTYPE) |
+                         grepl("^LAKE_SEASON_SNOW",EVTYPE), "LAKE-EFFECT_SNOW", EVTYPE))
+
+# Lakeshore Flood
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^LAKE_FLOOD",EVTYPE) |
+                         grepl("^LAKESHORE_FLOOD",EVTYPE), "LAKESHORE_FLOOD", EVTYPE))
+
+# Lightning
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^LIGHTNING",EVTYPE) | # anything that starts with lightning
+                         grepl("^LIGHTING$",EVTYPE) |
+                         grepl("^LIGNTNING$",EVTYPE), "LIGHTNING", EVTYPE))
+
+# OTHER - these are categories that don't really fit the storm data or are present in the official table
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^OTHER_",EVTYPE) |
+                         grepl("^SEVERE_TURBULENCE$",EVTYPE) |
+                         grepl("^APACHE_COUNTY$",EVTYPE) |
+                         grepl("^\\?$",EVTYPE) |
+                         grepl("^MARINE_MISHAP$",EVTYPE) |
+                         grepl("^MARINE_ACCIDENT$",EVTYPE), "OTHER", EVTYPE))
+
+# Rip Current
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^RIP_CURRENT",EVTYPE), "RIP_CURRENT", EVTYPE))
+# anything that starts with rip_current
+
+# Storm Surge Tide
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^STORM_SURGE",EVTYPE) |
+                         grepl("^RAPIDLY_RISING_WATER$",EVTYPE), "STORM_SURGE/TIDE", EVTYPE))
+
+# Sleet
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^SLEET",EVTYPE) | # anything that begins with sleet
+                         grepl("^FALLING_SNOW_ICE$",EVTYPE) |
+                         grepl("^SNOW_FREEZING_RAIN$",EVTYPE) |
+                         grepl("^SNOW_SLEET$",EVTYPE) |
+                         grepl("^SNOW_SLEET_FREEZING_RAIN$",EVTYPE) |
+                         grepl("^LIGHT_FREEZING_RAIN$",EVTYPE),"SLEET", EVTYPE))
+
+# Strong Winds
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^STRONG_WINDS$",EVTYPE) |
+                         grepl("^SEVERE_WIND_DAMAGE",EVTYPE) |
+                         grepl("^STORM_FORCE_WINDS$",EVTYPE),"STRONG_WIND", EVTYPE))
+
+# Thunderstorm Wind (Correct all the various misspellings)
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("TSTM",EVTYPE) |
+                         grepl("THUNDERSTROM",EVTYPE) |
+                         grepl("TUNDERSTORMM",EVTYPE) |
+                         grepl("TUNDERSTORM",EVTYPE) |
+                         grepl("THUDERSTORM",EVTYPE) |
+                         grepl("THUNDERTORM",EVTYPE) |
+                         grepl("THUNERSTORM",EVTYPE) |
+                         grepl("THUNDEERSTORM",EVTYPE) |
+                         grepl("THUNDERESTORM",EVTYPE), "THUNDERSTORM", EVTYPE))
+
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^THUNDERSTORM",EVTYPE) &
+                        !grepl("^MARINE_THUNDERSTORM",EVTYPE), "THUNDERSTORM_WIND", EVTYPE))
+
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^DRY_MI$",EVTYPE) |
+                         grepl("^WHIRLWIND$",EVTYPE) |
+                         grepl("^GUSTNADO$",EVTYPE) |
+                         grepl("^SEVERE_THUNDERSTORM",EVTYPE) | #anything that starts with this
+                         grepl("^DOWNBURST$",EVTYPE) |
+                         grepl("MICROBURST",EVTYPE) |
+                         grepl("MIRCOBURST",EVTYPE), "THUNDERSTORM_WIND", EVTYPE))
+                         # anything with microburst in it
+
+# Tornado
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^TORNADO",EVTYPE) | grepl("^TORNDAO",EVTYPE), "TORNADO", EVTYPE))
+
+# Tropical Storm
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^TROPICAL_STORM",EVTYPE) | # anything starting with TROPICAL_STORM
+                         grepl("^COASTALSTORM$",EVTYPE) |
+                         grepl("^COASTAL_STORM$",EVTYPE), "TROPICAL_STORM", EVTYPE))
+
+# Waterspout
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^WATERSPOUT",EVTYPE), "WATERSPOUT", EVTYPE))
+# anything starting with waterspout
+
+# Wildfire
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("FOREST_FIRE",EVTYPE) | # anything with FOREST_FIRE
+                         grepl("^WILDFIRES$",EVTYPE) |
+                         grepl("^BRUSH_FIRE$",EVTYPE) |
+                         grepl("^GRASS_FIRES$",EVTYPE) |
+                         grepl("^WILD_FIRES$",EVTYPE), "WILDFIRE", EVTYPE))
+
+# Winter Storm
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("WINTER_STORMS",EVTYPE) |
+                         grepl("WINTER_STORM_HIGH_WINDS",EVTYPE), "WINTER_STORM", EVTYPE))
+
+# Winter Weather
+positive_harm_table <- positive_harm_table %>%
+    mutate(EVTYPE=ifelse(grepl("^WINTER_WEATHER",EVTYPE) | # anything that starts with this
+                         grepl("^WINTRY_MIX$",EVTYPE) |
+                         grepl("^GLAZE_ICE$",EVTYPE) |
+                         grepl("^ICE$",EVTYPE) |
+                         grepl("^ICE_AND_SNOW$",EVTYPE) |
+                         grepl("^BLOWING_SNOW$",EVTYPE) |
+                         grepl("^BLACK_WINTER_WEATHER$",EVTYPE) |
+                         grepl("^THUNDERWINTER_WEATHER$",EVTYPE) |
+                         grepl("^MIXED_PRECIP$",EVTYPE) |
+                         grepl("^MIXED_PRECIPITATION$",EVTYPE) |
+                         grepl("^EARLY_FROST$",EVTYPE) |
+                         grepl("^SNOW",EVTYPE) | # anything left that begins with snow
+                         grepl("^LIGHT_SNOWFALL$",EVTYPE) |
+                         grepl("^LATE_SEASON_SNOW$",EVTYPE) |
+                         grepl("^RAIN_SNOW$",EVTYPE) |
+                         grepl("^THUNDERSNOW$",EVTYPE) |
+                         grepl("^LIGHT_SNOW$",EVTYPE) |
+                         grepl("^AGRICULTURAL_FREEZE$",EVTYPE) |
+                         grepl("^HEAVY_MIX$",EVTYPE) |
+                         grepl("SNOW_SQUALL$",EVTYPE), "WINTER_WEATHER", EVTYPE))
+
+ph_unique_envtypes <- unique(sort(positive_harm_table$EVTYPE))
+#print(length(ph_unique_envtypes))
+suppressWarnings(length(ph_unique_envtypes) <- prod(dim(matrix(ph_unique_envtypes, ncol = 4))))
+
+# matrix(ph_unique_envtypes, ncol=4) %>%
+#     kbl(col.names = c(1:4),caption="Consolidated/Fixed EVTYPEs That Cause Harm") %>%
+#     kable_styling(bootstrap_options = "striped", font_size = 10)
+
+# positive_harm_table
+# dim(positive_harm_table)
+
+```   
+    
+```{r, echo=FALSE, comment=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+
+person_harm_table <- positive_harm_table[!(positive_harm_table$FATALITIES == 0 & positive_harm_table$INJURIES == 0),]
+
+person_harm_table <- person_harm_table %>%
+        group_by(EVTYPE) %>%
+        summarize(INJURIES = sum(INJURIES,na.rm=TRUE),FATALITIES = sum(FATALITIES,na.rm=TRUE))
+
+pivot_personal_harm <- person_harm_table %>%
+    pivot_longer(!EVTYPE, names_to = "Harm", values_to = "Count")
+
+#pivot_personal_harm
+```
+
+## Results
+
+The following is a bar chart using a log scale for the y axis, this is to stop the top value from swamping everything else. In addition it has log color coding to make the extreme cases more visible. The bars are ordered by overall damage.  
+
+```{r Figure1p, echo = FALSE, fig.height=12, fig.width=16, warning=FALSE}
+
+injuries <- person_harm_table %>% plot_ly(x=~reorder(EVTYPE, -INJURIES),
+                y = ~log10(INJURIES),
+                name = "INJURIES",
+                type = "bar",
+                marker = list(color = ~log10(INJURIES), coloraxis="coloraxis"),
+                width = 900, height = 800) %>%
+                layout(xaxis = list(title = "Event Types",
+                                   zeroline = FALSE),
+                      yaxis = list(title = "INJURIES (LOG COUNT)",
+                                   type = 'log10',
+                                   zeroline = FALSE))
+
+fatalities <- person_harm_table %>% plot_ly(x=~reorder(EVTYPE, -FATALITIES),
+                y = ~log10(FATALITIES),
+                name = "FATALITIES",
+                type = "bar",
+                marker = list(color = ~log10(FATALITIES), coloraxis="coloraxis"),
+                width = 900, height = 800) %>%
+                layout(xaxis = list(title = "Event Types", 
+                                    zeroline = FALSE),
+                      yaxis = list(title = "FATALITIES (LOG COUNT)",
+                                   type = 'log10',
+                                   zeroline = FALSE),
+                      coloraxis=list(colorscale='RdBu'))
+ 
+subp <- subplot(fatalities, injuries, nrows =2, titleY = TRUE, titleX = TRUE, shareY = TRUE, shareX = TRUE) %>%
+    layout(title = "Count of Fatalities and Injuries for Harmful Storm Events", 
+           coloraxis=list(colorscale='RdBu'), 
+           showlegend = FALSE, 
+           plot_bgcolor='#D3D3D3',
+           font = list(family = 'Arial',
+                       size = 10,
+                       color = '#000000'),
+           xaxis = list( 
+               zerolinecolor = '#ffff', 
+               zerolinewidth = 2,
+               tickangle=270,
+               gridcolor = 'ffff'), 
+           yaxis = list( 
+               zerolinecolor = '#ffff', 
+               zerolinewidth = 2, 
+               gridcolor = 'ffff'))
+
+subp
+
+```
+
+
+
+  
+  
+  
