@@ -1,7 +1,6 @@
 ---
 title: 'Developing Data Products - Most Harmful US Storm Events'
 author: "Christine Grayson"
-date: "10/22/2021"
 output:
   html_document:
     df_print: paged
@@ -20,6 +19,7 @@ suppressWarnings(suppressMessages(library(readr)))
 suppressWarnings(suppressMessages(library(kableExtra)))
 suppressWarnings(suppressMessages(library(plotly)))
 ```
+#### 10/22/2021
 
 ## Synopsis
 
