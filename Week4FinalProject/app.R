@@ -60,7 +60,7 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-
+    
     output$distPlot <- renderPlotly({
         
         vline <- function(x = 0, color = "red") {
@@ -109,10 +109,17 @@ server <- function(input, output) {
     
     output$net <- renderForceNetwork({
         
+        # in case validation errors occur
+        output$stats <- renderText("nodes: 0 edges: 0")
+        # Apparently naming collisions are common in validate
+        shiny::validate(
+            need(input$sliderx[1] != input$sliderx[2], "Please select a valid date range")
+        )
+        
         output$s1 <- renderText({ paste0("Selected Range: ",format(input$sliderx[1],"%Y-%m-%d %H:%M:%S"),
                                          " - ",format(input$sliderx[2],"%Y-%m-%d %H:%M:%S")) })
+        
         sub_sm <- sm_data[sm_data$date >= input$sliderx[1] & sm_data$date < input$sliderx[2],]
-        output$nume <- renderText(paste0("rows: ", nrow(sub_sm)))
         
         # create node list
         sources <- sub_sm %>%
