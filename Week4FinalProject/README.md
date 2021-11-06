@@ -44,6 +44,8 @@ The user can then select date ranges using the slider above the histogram.
 
 The events in that time range are used to create a network graph.
 
+The user can interact with the network graphic, the mouse scroll can be used zoom in and out, left click to pan.
+
 Screen Shots
 ========================================================
 
@@ -192,9 +194,8 @@ ui <- fluidPage(
 
 Links
 ========================================================
-
-* [The Source of Data](http://datasets.syr.edu/datasets/Flickr.html){target="_new"}
-* [The Project Source Code on Github](https://github.com/graysonch/DevelopingDataProducts/tree/master/Week4FinalProject){target="_new"}
-* [This Presentation on Github](https://graysonch.github.io/DevelopingDataProducts/Week4FinalProject/Week4FinalProjectPresentation.html#(1)){target="_new"}
-* [The Theme Used for this Presentation](https://bootswatch.com/darkly/){target="_new"}
-* [Link to the Deployed Shiny App](https://graysonch.shinyapps.io/week4finalproject/){target="_new"}
+<li><a href="http://datasets.syr.edu/datasets/Flickr.html" target="_blank">The Source of Data</a></li>
+<li><a href="https://github.com/graysonch/DevelopingDataProducts/tree/master/Week4FinalProject" target="_blank">The Project Source Code on Github</a></li>
+<li><a href="https://graysonch.github.io/DevelopingDataProducts/Week4FinalProject/Week4FinalProjectPresentation.html#(1)" target="_blank">This Presentation on Github</a></li>
+<li><a href="https://bootswatch.com/darkly/" target="_blank">The Theme Used for the Presentation</a></li>
+<li><a href="https://graysonch.shinyapps.io/week4finalproject/" target="_blank">Link to the Deployed Shiny App</a></li>
