@@ -53,5 +53,8 @@ The following are the links to information on line
 
 * [The Source of Data](http://datasets.syr.edu/datasets/Flickr.html)
 * [The Project Source Code on Github](https://github.com/graysonch/DevelopingDataProducts/tree/master/Week4FinalProject)
+* [This Presentation on Github](https://graysonch.github.io/DevelopingDataProducts/Week4FinalProject/Week4FinalProjectPresentation.html#(1))
+* [The Theme Used for this Presentation](https://bootswatch.com/darkly/)
+* [Link to the Deployed Shiny App](https://graysonch.shinyapps.io/week4finalproject/)
 
 
