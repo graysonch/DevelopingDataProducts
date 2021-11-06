@@ -1,0 +1,57 @@
+---
+title: "Social Media Network Study"
+author: "Christine Grayson"
+date: "11/5/2021"
+output: 
+    slidy_presentation:
+        css: styles.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+This is a presentation to describe a shiny app created for the final project of the Coursera course "Developing Data Products" 
+
+Currently I work on a research project to study the spread of information on social media, so I had an idea to create an app that would help me with my work.
+
+The idea of this interactive graph is to be able to peer into the event network at user defined time ranges to see what type of connections there are.
+
+This app is intended to answer such questions as "are peaks in activity due to many users sending to many other users or are there just a few super users or bots sending to many users?"
+
+## Data
+
+One of the hardest problems in completing this project was producing the data. 
+
+It was not possible to use data from the project as it is restricted, so synthetic data had to be created. 
+
+It was possible to get edge data quite easily, but data that included date information seemed hard to find. 
+
+Eventually it was decided to use an open source edge list from [here](http://datasets.syr.edu/datasets/Flickr.html) and apply dates by hand using excel. The head of the data is given below using the head command.
+
+```{r, echo=FALSE, eval=TRUE, comment=""}
+head(read.csv(file="data/social_media_data_byhand.csv"))
+```
+
+## How the App Works
+
+A plotly histogram of events over time is shown on the left. On the right is the network graph initially depicting all the events.
+
+The user can then select date ranges using the slider above the histogram. 
+
+The events in that time range are used to create a network graph.
+
+```{r, fig.align='center', echo=FALSE, out.width="60%"}
+knitr::include_graphics("./img/ShinyAppStartup.PNG")
+```
+
+## Links to Information
+
+The following are the links to information on line
+
+* [The Source of Data](http://datasets.syr.edu/datasets/Flickr.html)
+* [The Project Source Code on Github](https://github.com/graysonch/DevelopingDataProducts/tree/master/Week4FinalProject)
+
+
