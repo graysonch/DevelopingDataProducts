@@ -5,14 +5,14 @@ Developing Data Products: Course Project
 Overview
 ========================================================
 
-This presentation has been created for the final project in the Coursera course "Developeing Data Products". 
+This presentation has been created for the final project in the Coursera course "Developing Data Products". 
 
 Included in this project are:
 
 - This README, providing an overview, code examples and links
 - A presentation created in R Markdown 
 - Code for the Shiny app also hosted on shinyapp.io
-- The source code ets
+- The source code etc.
 
 Important links are shown at the bottom of the page
 
@@ -193,8 +193,8 @@ ui <- fluidPage(
 Links
 ========================================================
 
-* [The Source of Data](http://datasets.syr.edu/datasets/Flickr.html)
-* [The Project Source Code on Github](https://github.com/graysonch/DevelopingDataProducts/tree/master/Week4FinalProject)
-* [This Presentation on Github](https://graysonch.github.io/DevelopingDataProducts/Week4FinalProject/Week4FinalProjectPresentation.html#(1))
-* [The Theme Used for this Presentation](https://bootswatch.com/darkly/)
-* [Link to the Deployed Shiny App](https://graysonch.shinyapps.io/week4finalproject/)
+* [The Source of Data](http://datasets.syr.edu/datasets/Flickr.html){target="_new"}
+* [The Project Source Code on Github](https://github.com/graysonch/DevelopingDataProducts/tree/master/Week4FinalProject){target="_new"}
+* [This Presentation on Github](https://graysonch.github.io/DevelopingDataProducts/Week4FinalProject/Week4FinalProjectPresentation.html#(1)){target="_new"}
+* [The Theme Used for this Presentation](https://bootswatch.com/darkly/){target="_new"}
+* [Link to the Deployed Shiny App](https://graysonch.shinyapps.io/week4finalproject/){target="_new"}
